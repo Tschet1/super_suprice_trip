@@ -6,5 +6,5 @@ class LocationKind(models.Model):
 class Location(models.Model):
     id = models.CharField(primary_key=True, max_length=20)
     name = models.CharField(max_length=100, null=True)
-    coordinates = models.PointField()
+    coordinates = models.PointField(null=True)
     kinds = models.ManyToManyField(LocationKind)

@@ -52,9 +52,6 @@ def get_travel_time(departure_time, max_travel_time_sec, coordinates):
 
     multi_polygon = MultiPolygon(polygons)
 
-    with open("data.geojson", "w") as f:
-        f.write(multi_polygon.geojson)
-
     return multi_polygon
 
 
