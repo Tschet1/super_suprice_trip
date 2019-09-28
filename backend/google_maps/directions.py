@@ -1,10 +1,7 @@
 import requests
-import dotenv
 import os
 import time
 import json
-
-dotenv.load_dotenv()
 
 def get_route_from_to(origin, destination, arrival_time=None, departure_time=None):
     if arrival_time is None and departure_time is None:
