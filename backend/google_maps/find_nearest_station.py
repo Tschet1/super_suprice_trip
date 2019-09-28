@@ -1,5 +1,5 @@
-from backend.time_map.time_travel_map import Coordinates
-from backend.google_maps.directions import get_route_from_to
+from time_map.time_travel_map import Coordinates
+from google_maps.directions import get_route_from_to
 import datetime
 
 def find_nearest_station_name(coordinates: Coordinates):

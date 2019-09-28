@@ -2,7 +2,7 @@ import requests
 import os
 import time
 import json
-from backend.time_map.time_travel_map import Coordinates
+from time_map.time_travel_map import Coordinates
 
 
 def get_route_from_to(origin, destination, arrival_time: int = 0, departure_time: int = 0):
