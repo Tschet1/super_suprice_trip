@@ -3,6 +3,8 @@ from django.contrib.gis.geos import Point
 from location.models import Location, LocationKind
 import json
 
+KIND_WHITELIST = ["amusements", "architecture", "natural", "historical", "baths_and_saunas"]
+
 def load_geojson(path):
     with open(path, "r") as file:
         data = json.load(file)
@@ -12,7 +14,7 @@ def load_geojson(path):
         feature_name = feature["properties"]["name"]
         feature_coordinate = feature["geometry"]["coordinates"]
         kinds = feature["properties"]["kinds"].split(",")
-        kinds = [LocationKind.objects.get_or_create(name=kind)[0] for kind in kinds]
+        kinds = [LocationKind.objects.get_or_create(name=kind)[0] for kind in kinds if kind in KIND_WHITELIST]
         location, _ = Location.objects.get_or_create(id=feature_id)
         location.name=feature_name[0:100]
         location.coordinates=Point(feature_coordinate[0], feature_coordinate[1])
