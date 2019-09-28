@@ -66,4 +66,5 @@ def le_preferences(request):
         ]
         },
         safe=False, 
-        json_dumps_params={"ensure_ascii": False})
+        json_dumps_params={"ensure_ascii": False}
+    )

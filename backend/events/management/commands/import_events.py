@@ -10,7 +10,7 @@ class Command(BaseCommand):
 
         for category in categories:
             category_id = category["category_id"]
-            category_name = category["title_de"]
+            category_name = category["title_en"]
             category_parent_id = category["parent_category_id"]
 
             category, _ = EventCategory.objects.get_or_create(id=category_id, name=category_name)
@@ -25,7 +25,7 @@ class Command(BaseCommand):
             event_date = event["date"]
             start_time = event["start_time"]
             end_time = event["end_time"]
-            event_name = event["title_de"][0:100]
+            event_name = event["title_en"][0:100]
             event_venue = event["address_venue_name"][0:100]
             coordinates = Point(event["address_longitude"], event["address_latitude"])
 
