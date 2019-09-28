@@ -15,4 +15,3 @@ class Event(models.Model):
     end_time = models.TimeField(null=True)
     coordinates = models.PointField(null=True)
     categories = models.ManyToManyField(EventCategory)
-    nearest_public_transport = models.CharField(max_length=100)

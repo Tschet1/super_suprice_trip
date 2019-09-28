@@ -1,10 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.contrib.gis.geos import Point
 from events.models import Event, EventCategory
-from google_maps.find_nearest_station import find_nearest_station_name
-from time_map.time_travel_map import Coordinates
 import json
-
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
@@ -18,7 +15,6 @@ class Command(BaseCommand):
 
             category, _ = EventCategory.objects.get_or_create(id=category_id, name=category_name)
             category.parent_id = category_parent_id
-
             category.save()
 
         with open("data/guidle/event.json", "r") as file:
@@ -33,16 +29,14 @@ class Command(BaseCommand):
             event_venue = event["address_venue_name"][0:100]
             coordinates = Point(event["address_longitude"], event["address_latitude"])
 
-            nevent, _ = Event.objects.get_or_create(id=event_id)
-            nevent.event_name = event_name
-            nevent.venue_name = event_venue
-            nevent.date = event_date
-            nevent.start_time = start_time
-            nevent.end_time = end_time
-            nevent.coordinates = coordinates
-            nevent.nearest_public_transport = find_nearest_station_name(
-                Coordinates(long=event["address_longitude"], lat=event["address_latitude"]))
-            nevent.save()
+            event, _ = Event.objects.get_or_create(id=event_id)
+            event.event_name = event_name
+            event.venue_name = event_venue
+            event.date = event_date
+            event.start_time = start_time
+            event.end_time = end_time
+            event.coordinates=coordinates
+            event.save()
 
         with open("data/guidle/event_category.json", "r") as file:
             mappings = json.load(file)
