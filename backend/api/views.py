@@ -26,8 +26,8 @@ def surprise_me(request):
         coordinates=coordinates
     )
 
-    locations = Location.objects.select_related("kinds").filter(coordinates__within=travel_time_area)
-    events = Event.objects.select_related("categories").filter(coordinates__within=travel_time_area)
+    locations = Location.objects.filter(coordinates__within=travel_time_area)
+    events = Event.objects.filter(coordinates__within=travel_time_area)
     
     return JsonResponse({
             "success":True, 
