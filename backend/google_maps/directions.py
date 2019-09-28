@@ -2,17 +2,18 @@ import requests
 import os
 import time
 import json
+from backend.time_map.time_travel_map import Coordinates
 
-def get_route_from_to(origin, destination, arrival_time=None, departure_time=None):
-    if arrival_time is None and departure_time is None:
+
+def get_route_from_to(origin, destination, arrival_time: int = 0, departure_time: int = 0):
+    if arrival_time == 0 and departure_time == 0:
         raise Exception('Define start arrival time or departure time')
 
-    if arrival_time is not None and departure_time is not None:
+    if arrival_time != 0 and departure_time != 0:
         raise Exception('Do not define start and end time')
 
-    if arrival_time is not None and type(arrival_time) is not int or \
-            departure_time is not None and type(departure_time) is not int:
-        raise ValueError('Please give a timestamp as departure or arrival time')
+    if type(origin) is Coordinates:
+        origin = "{},{}".format(origin.long, origin.lat)
 
     url = "https://maps.googleapis.com/maps/api/directions/json"
 
@@ -22,7 +23,7 @@ def get_route_from_to(origin, destination, arrival_time=None, departure_time=Non
         "key": os.environ['GOOGLE_MAPS_API_KEY'],
         "mode": 'transit'
     }
-    if arrival_time is not None:
+    if arrival_time != 0:
         querystring['arrival_time'] = arrival_time
     else:
         querystring['departure_time'] = departure_time
@@ -40,5 +41,9 @@ def get_route_from_to(origin, destination, arrival_time=None, departure_time=Non
 
     return json.loads(response.text)
 
+
 if __name__ == '__main__':
-    get_route_from_to('zug', 'zürich', departure_time=round(time.time()))
+    import dotenv
+
+    dotenv.load_dotenv()
+    print(get_route_from_to('zug', 'zürich', departure_time=round(time.time())))
