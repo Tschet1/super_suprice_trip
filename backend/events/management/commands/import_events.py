@@ -13,7 +13,8 @@ class Command(BaseCommand):
             category_name = category["title_en"]
             category_parent_id = category["parent_category_id"]
 
-            category, _ = EventCategory.objects.get_or_create(id=category_id, name=category_name)
+            category, _ = EventCategory.objects.get_or_create(id=category_id)
+            category.name=category_name
             category.parent_id = category_parent_id
             category.save()
 

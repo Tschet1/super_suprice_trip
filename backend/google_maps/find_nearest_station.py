@@ -4,6 +4,8 @@ import datetime
 
 def find_nearest_station_name(coordinates: Coordinates):
     res = get_route_from_to(coordinates, "Olten", departure_time=round(datetime.datetime.now().timestamp()))
+    if res['status'] == 'ZERO_RESULTS':
+        return ""
     for step in res['routes'][0]['legs'][0]['steps']:
         if step['travel_mode'] == 'TRANSIT':
             return step['transit_details']['departure_stop']['name']
