@@ -2,9 +2,36 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
+import { Provider } from 'react-redux';
+import { createStore } from 'redux';
+import reducers from './util/redux/reducers';
 import * as serviceWorker from './serviceWorker';
 
-ReactDOM.render(<App />, document.getElementById('root'));
+const formatDate = (D) => {
+    const S = `${D.getFullYear()}-` +
+        `${D.getMonth() >= 10 ? D.getMonth() : `0${D.getMonth()}`}-` +
+        `${D.getDate() >= 10 ? D.getDate() : `0${D.getDate()}`}T` +
+        `${D.getHours() >= 10 ? D.getHours() : `0${D.getHours()}`}:` +
+        `${D.getMinutes() >= 10 ? D.getMinutes() : `0${D.getMinutes()}`}`
+    // console.log(S);
+    return S;
+}
+
+ReactDOM.render(
+    <Provider
+        store={createStore(reducers, {
+            reduxProps: {
+                location: 'Zürich, Switzerland',
+                startDT: formatDate(new Date()),
+                endDT: formatDate(new Date(Date.now() + 60000 * 60 * 24)),
+                passive: 0,
+                wild: 0
+            }
+        })}
+    >
+        <App />
+    </Provider>
+    , document.getElementById('root'));
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.
