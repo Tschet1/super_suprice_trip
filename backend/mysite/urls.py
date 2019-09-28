@@ -16,10 +16,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from google_maps.views import get_directions_view
-from api.views import surprise_me
+from api.views import surprise_me, le_preferences
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('instrutions/get', get_directions_view, name='get_directions_view'),
     path('api/surprize', surprise_me, name='surprise_me'),
+    path('api/preferences', le_preferences, name='le_preferences'),
 ]

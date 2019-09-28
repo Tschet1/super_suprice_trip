@@ -3,8 +3,8 @@ from time_map.time_travel_map import get_travel_time, Coordinates
 from datetime import datetime
 from urllib.parse import unquote
 
-from location.models import Location
-from events.models import Event
+from location.models import Location, LocationKind
+from events.models import Event, EventCategory
 
 def surprise_me(request):
     if "lat" not in request.GET or "long" not in request.GET:
@@ -22,23 +22,48 @@ def surprise_me(request):
 
     travel_time_area = get_travel_time(
         departure_time=departure_time, 
-        max_travel_time_sec=1800, 
+        max_travel_time_sec=3600, 
         coordinates=coordinates
     )
 
-    locations = Location.objects.filter(coordinates__within=travel_time_area)
-    events = Event.objects.filter(coordinates__within=travel_time_area)
+    locations = Location.objects.select_related("kinds").filter(coordinates__within=travel_time_area)
+    events = Event.objects.select_related("categories").filter(coordinates__within=travel_time_area)
     
     return JsonResponse({
-        "success":True, 
-        "locations": [
+            "success":True, 
+            "results": [
+                {
+                    "type": "location",
+                    "name": location.name
+                } for location in locations
+            ]+[
+                {
+                    "type": "event",
+                    "name": event.event_name
+                } for event in events
+            ],
+        }, 
+        safe=False, 
+        json_dumps_params={"ensure_ascii": False}
+    )
+
+def le_preferences(request):
+    kinds = LocationKind.objects.all()
+    categories = EventCategory.objects.filter(parent=None)
+    return JsonResponse({
+        "success":True,
+        "preferences": [
             {
-                "name": location.name
-            } for location in locations
-        ],
-        "events": [
+                "id": kind.name,
+                "name": kind.name.replace("_", " ").title()
+            } for kind in kinds
+            
+        ] + [
             {
-                "name": event.event_name
-            } for event in events
-        ],
-    }, safe=False)
+                "id": str(category.id),
+                "name": category.name
+            } for category in categories
+        ]
+        },
+        safe=False, 
+        json_dumps_params={"ensure_ascii": False})
