@@ -27,7 +27,7 @@ class Command(BaseCommand):
             end_time = event["end_time"]
             event_name = event["title_de"][0:100]
             event_venue = event["address_venue_name"][0:100]
-            coordinates = Point(event["address_latitude"], event["address_longitude"])
+            coordinates = Point(event["address_longitude"], event["address_latitude"])
 
             event, _ = Event.objects.get_or_create(id=event_id)
             event.event_name = event_name
