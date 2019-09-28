@@ -40,8 +40,15 @@ INSTALLED_APPS = [
     'django.contrib.gis',
     "location",
     "events",
+    "api",
     "mptt",
 ]
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+    }
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

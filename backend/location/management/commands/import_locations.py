@@ -13,8 +13,9 @@ def load_geojson(path):
         feature_coordinate = feature["geometry"]["coordinates"]
         kinds = feature["properties"]["kinds"].split(",")
         kinds = [LocationKind.objects.get_or_create(name=kind)[0] for kind in kinds]
-        location, _ = Location.objects.get_or_create(id=feature_id, coordinates=Point(*feature_coordinate))
+        location, _ = Location.objects.get_or_create(id=feature_id)
         location.name=feature_name[0:100]
+        location.coordinates=Point(feature_coordinate[0], feature_coordinate[1])
         location.save()
         location.kinds.set(kinds)
 
