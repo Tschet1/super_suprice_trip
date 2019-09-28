@@ -9,7 +9,7 @@ import * as serviceWorker from './serviceWorker';
 
 const formatDate = (D) => {
     const S = `${D.getFullYear()}-` +
-        `${D.getMonth() >= 10 ? D.getMonth() : `0${D.getMonth()}`}-` +
+        `${D.getMonth() >= 10 ? D.getMonth() : `0${D.getMonth() + 1}`}-` +
         `${D.getDate() >= 10 ? D.getDate() : `0${D.getDate()}`}T` +
         `${D.getHours() >= 10 ? D.getHours() : `0${D.getHours()}`}:` +
         `${D.getMinutes() >= 10 ? D.getMinutes() : `0${D.getMinutes()}`}`
@@ -21,8 +21,8 @@ ReactDOM.render(
     <Provider
         store={createStore(reducers, {
             reduxProps: {
-                location: 'Zürich, Switzerland',
-                startDT: formatDate(new Date()),
+                location: "ChIJGaK-SZcLkEcRA9wf5_GNbuY",
+                startDT: formatDate(new Date(Date.now())),
                 endDT: formatDate(new Date(Date.now() + 60000 * 60 * 24)),
                 passive: 0,
                 wild: 0

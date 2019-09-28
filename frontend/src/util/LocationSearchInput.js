@@ -38,7 +38,11 @@ class LocationInput extends React.Component {
 
     handleChange = address => {
         this.setState({ address });
-        this.props.setReduxValue({ prop: 'location', value: address });
+    }
+
+    handleClick = suggestion => {
+        this.setState({ address: suggestion.description })
+        this.props.setReduxValue({ prop: 'location', value: suggestion.placeId });
     }
 
     render() {
@@ -54,7 +58,7 @@ class LocationInput extends React.Component {
                             {this.state.focused ?
                                 <Suggestions>
                                     {suggestions.map(suggestion =>
-                                        <Suggestion onClick={() => this.handleChange(suggestion.description)} key={suggestion.description}>{suggestion.description}</Suggestion>)}</Suggestions> : null}
+                                        <Suggestion onClick={() => this.handleClick(suggestion)} key={suggestion.description}>{suggestion.description}</Suggestion>)}</Suggestions> : null}
                         </div>)
                 }}
             </PlacesAutocomplete>
