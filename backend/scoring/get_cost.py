@@ -1,9 +1,10 @@
-def get_cost(weights,event_category,price=1,price_limit=1,superprice_flag=False):
+def get_cost(weights, event_category, price=1, price_limit=1, superprice_flag=False):
     import math
     """activity score: weights(1) (1:active, 0:passive), 
     culture score: weights(2) (1:culture and museum, 0:concert and party),
     For super discount prices: set superprice_flag = true"""
-    if event_category in ['Congresses & conferences','Society','Community calendar','Culinary art','This and that','Economy','Undefined']:
+    if event_category in ['Congresses & conferences', 'Society', 'Community calendar', 'Culinary art', 'This and that',
+                          'Economy', 'Undefined']:
         cost = 10000
 
     elif event_category == 'Customs, Folklore & Celebrations':
@@ -66,9 +67,9 @@ def get_cost(weights,event_category,price=1,price_limit=1,superprice_flag=False)
     if price > price_limit:
         cost = 10000
     elif superprice_flag == True:
-        cost = cost + 0.25*price/price_limit
+        cost = cost + 0.25 * price / price_limit
     else:
-        cost = cost + 0.5*price/price_limit
+        cost = cost + 0.5 * price / price_limit
 
     return cost
 
@@ -85,4 +86,3 @@ event_category = backend.get_categories_guidle.get_categories(event_id)
 print(event_category)
 print(get_cost(weights, event_category))
 #print(get_cost(weights, event_category,price,price_limit,superprice_flag))"""
-

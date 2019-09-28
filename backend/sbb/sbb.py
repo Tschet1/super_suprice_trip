@@ -1,12 +1,9 @@
 import requests
-import dotenv
+#import dotenv
 import os
 import time
 import json
 import datetime
-
-dotenv.load_dotenv()
-
 
 def _login():
     url = "https://sso-int.sbb.ch/auth/realms/SBB_Public/protocol/openid-connect/token"
@@ -183,5 +180,6 @@ def get_prize_info_with_arrival_time(start_loc, end_loc, arrival_time):
 
 
 if __name__ == "__main__":
-    print(get_prize_info_with_depart_time('Zug', 'Zürich HB', datetime.datetime.now() + datetime.timedelta(hours=2)))
+    #print(get_prize_info_with_depart_time('47.166168,8.515495', 'Zürich HB', datetime.datetime.now() + datetime.timedelta(hours=2)))
     print(get_prize_info_with_arrival_time('Zug', 'Zürich HB', datetime.datetime.now() + datetime.timedelta(hours=5)))
+
