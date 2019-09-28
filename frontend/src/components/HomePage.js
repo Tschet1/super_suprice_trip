@@ -1,6 +1,7 @@
 import React from 'react'
 import { withRouter } from 'react-router-dom'
 import styled from 'styled-components'
+import LocationInput from '../util/LocationSearchInput';
 
 const Home = styled.div`
     background-color: #AED9E0
@@ -69,7 +70,7 @@ const HomePage = props => {
                 <MainDiv>
                     <HeadingText>Super Surprise Trip</HeadingText>
                     <SelectorDiv>
-                        <ItemInSelector type="text" defaultValue="Location"></ItemInSelector>
+                        <LocationInput />
                         <ItemInSelector type="datetime-local" defaultValue={formatDate(new Date())} onChange={(e) => console.log(e.target.value)}></ItemInSelector>
                         <ItemInSelector type="datetime-local" defaultValue={formatDate(new Date(Date.now() + 60000 * 60 * 24))} onChange={(e) => console.log(e.target.value)}></ItemInSelector>
                         <ItemInSelector type="submit" value="Find my trip"></ItemInSelector>
