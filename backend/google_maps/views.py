@@ -10,6 +10,7 @@ def Instruction(type=None, instruction=None):
     }
 
 def get_directions_view(request):
+    # TODO: load the information from the request and store in location,...
     request.GET.get('start', 0)
     request.GET.get('end', 0)
     request.GET.get('id', 0)
