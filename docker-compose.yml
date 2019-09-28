@@ -1,0 +1,28 @@
+version: '3.4'
+services:
+  backend:
+    build: ./backend/
+    command: /bin/bash -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./backend/:/code
+    ports: 
+      - 8000:8000
+    depends_on: 
+      - postgres
+  frontend:
+    build: ./frontend/
+    command: npm run start
+    volumes:
+      - ./frontend/src/:/code/src
+      - ./frontend/public/:/code/public
+    ports: 
+      - 3000:3000  
+  postgres:
+    image: mdillon/postgis:9.5-alpine
+    environment: 
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: 1234
+    ports: 
+      - 5432:5432
+    volumes:
+      - .db:/var/lib/postgresql/data
