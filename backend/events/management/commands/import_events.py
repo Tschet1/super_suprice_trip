@@ -11,8 +11,11 @@ class Command(BaseCommand):
         for category in categories:
             category_id = category["category_id"]
             category_name = category["title_de"]
+            category_parent_id = category["parent_category_id"]
 
-            EventCategory.objects.get_or_create(id=category_id, name=category_name)
+            category, _ = EventCategory.objects.get_or_create(id=category_id, name=category_name)
+            category.parent_id = category_parent_id
+            category.save()
 
         with open("data/guidle/event.json", "r") as file:
             events = json.load(file)

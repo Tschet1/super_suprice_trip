@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.gis',
     "location",
     "events",
+    "mptt",
 ]
 
 MIDDLEWARE = [

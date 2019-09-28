@@ -30,43 +30,51 @@ const HeadingText = styled.div`
     font-size: calc(12vw - 15px);
 `
 
-const MainButton = styled.div`
+const SelectorDiv = styled.div`
     margin: 20px;
+    width: calc(100% - 40px);
+    display: flex;
+    flex-flow: row wrap;
     font-size: 28px;
     padding: 15px;
     border-radius: 5px;
     background-color: #9FA0C3;
+    justify-content: center;
+    align-items: center;
 `
 
-const getLocation = async () => {
-    if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const { latitude, longitude } = position.coords;
-                return { latitude, longitude };
-            },
-            (error_message) => {
-                console.error('An error has occured while retrieving location', error_message)
-            }
-        );
-    } else {
-        console.log('Geolocation is not enabled on this browser')
-    }
+const ItemInSelector = styled.input`
+    color: black;
+    margin: 5px;
+    padding: 5px;
+    border-radius: 3px;
+    background-color: white;
+`;
+
+const formatDate = (D) => {
+    const S = `${D.getFullYear()}-` +
+        `${D.getMonth() >= 10 ? D.getMonth() : `0${D.getMonth()}`}-` +
+        `${D.getDate() >= 10 ? D.getDate() : `0${D.getDate()}`}T` +
+        `${D.getHours() >= 10 ? D.getHours() : `0${D.getHours()}`}:` +
+        `${D.getMinutes() >= 10 ? D.getMinutes() : `0${D.getMinutes()}`}`
+    // console.log(S);
+    return S;
 }
 
 const HomePage = props => {
-    const { history } = props;
-
+    // const { history } = props;
     return (
         <Home>
             <SectionDiv>
                 <MainDiv>
                     <HeadingText>Super Surprise Trip</HeadingText>
-                    <MainButton onClick={() => history.push("/trip")}>Find a trip now!</MainButton>
+                    <SelectorDiv>
+                        <ItemInSelector type="text" defaultValue="Location"></ItemInSelector>
+                        <ItemInSelector type="datetime-local" defaultValue={formatDate(new Date())} onChange={(e) => console.log(e.target.value)}></ItemInSelector>
+                        <ItemInSelector type="datetime-local" defaultValue={formatDate(new Date(Date.now() + 60000 * 60 * 24))} onChange={(e) => console.log(e.target.value)}></ItemInSelector>
+                        <ItemInSelector type="submit" value="Find my trip"></ItemInSelector>
+                    </SelectorDiv>
                 </MainDiv>
-            </SectionDiv>
-            <SectionDiv>
-                About
             </SectionDiv>
         </Home>
     )
