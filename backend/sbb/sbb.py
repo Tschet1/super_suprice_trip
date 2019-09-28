@@ -56,7 +56,6 @@ def _get_trips_by_departure_or_arrival(src_id, dst_id, header, arrival=None, dep
 
     response = requests.request("GET", url, headers=header, params=params)
     response = json.loads(response.text)
-    print(response[0]['links'][0])
 
     return [trip['tripId'] for trip in response]
 
@@ -65,14 +64,12 @@ def _get_trip_cost(tripIds, headers):
 
     params = {
         'passengers': 'paxa;42;half-fare', #TODO: make this dynamic
-        'tripIds': tripIds[0],
+        'tripIds': tripIds,
     }
 
-    print(requests.Request("GET", url, headers=headers, params=params).prepare().url)
     response = requests.request("GET", url, headers=headers, params=params)
-    print(response)
     response = json.loads(response.text)
-    print(headers)
+    return [(trip['tripId'], trip['price'], trip['productId'] == 4004) for trip in response]
     #return [trip['tripId'] for trip in response]
 
 
@@ -137,7 +134,7 @@ def _get_trips_arrival(src_id, dst_id, date, headers):
     return [(trip['offers'][0]['offerId'], trip['totalPrice'], trip['offers'][0]['productId'] == 125) for trip in json.loads(response.text) if len(trip['offers']) > 0 and not trip['offers'][0]['direction'] == 'round']
 
 
-def get_prize_info_with_depart_time(start_loc, end_loc, start_time, duration_guess):
+def get_prize_info_with_depart_time(start_loc, end_loc, start_time):
     token = _login()
 
     headers = {
@@ -153,9 +150,12 @@ def get_prize_info_with_depart_time(start_loc, end_loc, start_time, duration_gue
     dst_id = _get_uid(end_loc, headers)
 
     # get trips
-    trips = _get_trips_start(start_id, dst_id, start_time, headers)
+    trips = _get_trips_by_departure_or_arrival(start_id, dst_id, headers, departure=start_time)
 
-    return trips
+    # get costs
+    costs = _get_trip_cost(trips, headers)
+
+    return costs
 
 def get_prize_info_with_arrival_time(start_loc, end_loc, arrival_time):
     token = _login()
@@ -172,15 +172,16 @@ def get_prize_info_with_arrival_time(start_loc, end_loc, arrival_time):
     start_id = _get_uid(start_loc, headers)
     dst_id = _get_uid(end_loc, headers)
 
-    _get_trip_cost(_get_trips_by_departure_or_arrival(start_id, dst_id, headers, arrival=arrival_time), headers)
-
     # get trips
-    trips = _get_trips_arrival(start_id, dst_id, arrival_time, headers)
+    trips = _get_trips_by_departure_or_arrival(start_id, dst_id, headers, arrival=arrival_time)
 
-    return trips
+    # get costs
+    costs = _get_trip_cost(trips, headers)
+
+    return costs
 
 
 
 if __name__ == "__main__":
-    print(get_prize_info_with_depart_time('Montreux Bahnhof', 'Zürich HB', datetime.datetime.now(),0))
-    print(get_prize_info_with_arrival_time('Montreux Bahnhof', 'Zürich HB', datetime.datetime.now()))
+    print(get_prize_info_with_depart_time('Zug', 'Zürich HB', datetime.datetime.now() + datetime.timedelta(hours=2)))
+    print(get_prize_info_with_arrival_time('Zug', 'Zürich HB', datetime.datetime.now() + datetime.timedelta(hours=5)))
