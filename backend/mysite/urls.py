@@ -15,7 +15,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from backend.src.getInstructions import getInstructions
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('instrutions/get', getInstructions, name='instructions.get'),
 ]
