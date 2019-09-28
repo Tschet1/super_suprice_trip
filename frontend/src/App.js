@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom';
 import HomePage from './components/HomePage';
 import Trip from './components/Trip';
+import { getLocation } from './util/Location';
 
 function App() {
   return (
