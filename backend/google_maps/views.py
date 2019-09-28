@@ -25,7 +25,6 @@ def get_directions_view(request):
 
     # way there
     res = get_route_from_to(location_start_end, location_thing, departure_time=time_start)
-    print(res)
     for step in res['routes'][0]['legs'][0]['steps']:
         instructions.append(Instruction(type='travel', instruction=step))
 
