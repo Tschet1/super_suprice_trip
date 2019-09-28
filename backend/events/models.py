@@ -1,8 +1,10 @@
 from django.contrib.gis.db import models
+from mptt.models import MPTTModel, TreeForeignKey
 
-class EventCategory(models.Model):
+class EventCategory(MPTTModel):
     id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=100)
+    parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children')
 
 class Event(models.Model):
     id = models.IntegerField(primary_key=True)
