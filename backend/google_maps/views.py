@@ -1,4 +1,4 @@
-import backend.src.directions
+from google_maps.directions import get_route_from_to
 import time
 from collections import namedtuple
 from django.http import JsonResponse
@@ -9,7 +9,7 @@ def Instruction(type=None, instruction=None):
         'instruction': instruction
     }
 
-def getInstructions(request):
+def get_directions_view(request):
     request.GET.get('start', 0)
     request.GET.get('end', 0)
     request.GET.get('id', 0)
@@ -24,7 +24,7 @@ def getInstructions(request):
     instructions = []
 
     # way there
-    res = backend.src.directions.get_route_from_to(location_start_end, location_thing, departure_time=time_start)
+    res = get_route_from_to(location_start_end, location_thing, departure_time=time_start)
     for step in res['routes'][0]['legs'][0]['steps']:
         instructions.append(Instruction(type='travel', instruction=step))
 
@@ -32,12 +32,8 @@ def getInstructions(request):
     instructions.append(Instruction(type='visit', instruction='Visit the thing'))
 
     # way back
-    res = backend.src.directions.get_route_from_to(location_thing, location_start_end, departure_time=time_back)
+    res = get_route_from_to(location_thing, location_start_end, departure_time=time_back)
     for step in res['routes'][0]['legs'][0]['steps']:
         instructions.append(Instruction(type='travel', instruction=step))
 
     return JsonResponse(instructions, safe=False)
-
-if __name__ == '__main__':
-    res = getInstructions(1)
-    print(res)

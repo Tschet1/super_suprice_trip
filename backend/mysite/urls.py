@@ -15,9 +15,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from backend.src.getInstructions import getInstructions
+from google_maps.views import get_directions_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('instrutions/get', getInstructions, name='instructions.get'),
+    path('instrutions/get', get_directions_view, name='get_directions_view'),
 ]
