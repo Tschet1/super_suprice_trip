@@ -8,24 +8,24 @@ category_preferences = {
         "social_score": 0.5
     },
     'Stage': {
-        "activity_score": 0.0,
-        "social_score": 0.0
+        "activity_score": 0.1,
+        "social_score": 0.5
     },
     'Exhibitions': {
-        "activity_score": 0.1,
-        "social_score": 1
+        "activity_score": 0.3,
+        "social_score": 0.8
     },
     'Art & design': {
-        "activity_score": 0.1,
+        "activity_score": 0.3,
         "social_score": 0.8
     },
     'Concert Pop / Rock / Jazz': {
         "activity_score": 0.75,
-        "social_score": 0.0
+        "social_score": 0.75
     },
     'Concert folk music': {
-        "activity_score": 0.6,
-        "social_score": 0.1
+        "activity_score": 0.5,
+        "social_score": 0.6
     },
     'Fair & market': {
         "activity_score": 0.5,
@@ -33,50 +33,50 @@ category_preferences = {
     },
     'Concerts others': {
         "activity_score": 0.4,
-        "social_score": 1
+        "social_score": 0.5
     },
     'Religion & Spirituality': {
-        "activity_score": 0.4,
-        "social_score": 1
+        "activity_score": 0.2,
+        "social_score": 0.8
     },
     'Party': {
         "activity_score": 0.8,
-        "social_score": 1.0
+        "social_score": 0.8
     },
     'Sightseeing & city tour': {
         "activity_score": 0.75,
-        "social_score": 0.9
+        "social_score": 0.7
     },
     'Sports': {
         "activity_score": 1.0,
         "social_score": 0.5
     },
     'Classical concert': {
-        "activity_score": 0.0,
+        "activity_score": 0.1,
         "social_score": 0.5
     },
     'amusement': {
         "activity_score": 0.75,
-        "social_score": 1.0
+        "social_score": 0.9
     },
     'architecture': {
         "activity_score": 0.5,
-        "social_score": 0.0
+        "social_score": 0.1
     },
     'cultural': {
         "activity_score": 0.5,
-        "social_score": 0.0
+        "social_score": 0.5
     },
     'historical': {
         "activity_score": 0.5,
-        "social_score": 0.0
+        "social_score": 0.1
     },
     'natural': {
         "activity_score": 1.0,
         "social_score": 0.5
     },
     'welness': {
-        "activity_score": 0.0,
+        "activity_score": 0.1,
         "social_score": 0.5
     },
 }

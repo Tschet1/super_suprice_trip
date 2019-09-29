@@ -75,8 +75,6 @@ def surprise_me(request):
     prefered_events = preferences_filter_for_events(events_in_the_area, { "activity_score": activity_score, "social_score": social_score}, 20)
     best_priced_events = budget_filter_for_events(prefered_events, budget, address, datetime_start, datetime_end, 10)
 
-    logger.error(best_priced_events)
-
     # TODO: add place label
     return JsonResponse({
             "success":True, 
