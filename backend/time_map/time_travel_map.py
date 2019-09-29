@@ -4,9 +4,13 @@ from datetime import datetime
 import os
 from collections import namedtuple
 from django.contrib.gis.geos import Polygon, LinearRing, MultiPolygon
+from funcy import cache, retry
+from datetime import timedelta
 
 Coordinates = namedtuple('Coordinates', ['long', 'lat'])
 
+@cache(timeout=timedelta(minutes=15))
+@retry(3, timeout=1)
 def get_travel_time(departure_time, max_travel_time_sec, coordinates):
     url = "http://api.traveltimeapp.com/v4/time-map"
     payload = json.dumps({
