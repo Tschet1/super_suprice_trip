@@ -17,7 +17,7 @@ services:
       - ./frontend/src/:/code/src
       - ./frontend/public/:/code/public
     ports: 
-      - 3000:3000  
+      - 80:3000  
   postgres:
     image: mdillon/postgis:9.5-alpine
     environment: 
