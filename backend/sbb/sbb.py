@@ -5,6 +5,7 @@ import time
 import json
 import datetime
 import logging
+from typing import NamedTuple
 
 def _login():
     url = "https://sso-int.sbb.ch/auth/realms/SBB_Public/protocol/openid-connect/token"
@@ -57,6 +58,13 @@ def _get_trips_by_departure_or_arrival(src_id, dst_id, header, arrival=None, dep
 
     return [trip['tripId'] for trip in response]
 
+
+
+class Trip(NamedTuple):
+    id: str
+    price: int
+    is_supersaver: bool
+
 def _get_trip_cost(tripIds, headers):
     url = 'https://b2p-int.api.sbb.ch/api/v2/prices'
 
@@ -67,8 +75,16 @@ def _get_trip_cost(tripIds, headers):
 
     response = requests.request("GET", url, headers=headers, params=params)
     response = json.loads(response.text)
-    return [(trip['tripId'], trip['price']/100., trip['productId'] == 4004) for trip in response]
-    #return [trip['tripId'] for trip in response]
+    
+    trips = [
+        Trip(
+            trip['tripId'], 
+            trip['price']/100., 
+            trip['productId'] == 4004
+        )  for trip in response if "status" not in response
+    ]
+    if trips:
+        return min(trips, key=lambda trip: trip.price)
 
 
 

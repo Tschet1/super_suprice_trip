@@ -1,6 +1,6 @@
 
 from math import fabs
-from typing import Dict, NamedTuple, Iterable, Set
+from typing import Dict, NamedTuple, Iterable, Set, Optional
 from events.models import Event, EventCategory
 category_preferences = {
     'Customs, Folklore & Celebrations': {
@@ -40,7 +40,7 @@ category_preferences = {
         "social_score": 1
     },
     'Party': {
-        "activity_score": 1.0,
+        "activity_score": 0.8,
         "social_score": 1.0
     },
     'Sightseeing & city tour': {
@@ -89,7 +89,8 @@ for category in EventCategory.objects.all():
 
 class WeightedEvent(NamedTuple):
     event: Event
-    score: float
+    preference_score: Optional[float]
+    cost: Optional[int]
 
 def weight_category(category, preferences):
     score = 1.0
@@ -102,13 +103,11 @@ def weight_category(category, preferences):
 def preferences_filter_for_events(events: Iterable[Event], preferences:Dict[str,float], max_results: int):
     weighted_events = []
     for event in events:
-        all_categories: Set[EventCategory] = set()
-        for category in event.categories.all():
-            all_categories.add(category)
-                
+        all_categories = event.categories.all()     
 
         category_scores = map(lambda category: weight_category(category, preferences), all_categories)
         top_category_score = max(category_scores, default=0.0)
-        weighted_events.append(WeightedEvent(event, top_category_score))
-    sorted_weighted_events = sorted(weighted_events, key=lambda weighted_event: weighted_event.score, reverse=True)
+        weighted_events.append(WeightedEvent(event, top_category_score, None))
+    sorted_weighted_events = sorted(weighted_events, key=lambda weighted_event: weighted_event.preference_score, reverse=True)
     return sorted_weighted_events[0:max_results]
+

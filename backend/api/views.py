@@ -13,7 +13,7 @@ from time_map.time_travel_map import Coordinates
 import get_categories_guidle
 import logging
 from random import shuffle
-from api.preferences_filter import preferences_filter_for_events
+from api.preferences_filter import preferences_filter_for_events, WeightedEvent
 
 def surprise_me(request):
     logger = logging.getLogger('logger')
@@ -62,19 +62,20 @@ def surprise_me(request):
 
     # find locations in reachable area
     #locations = Location.objects.filter(coordinates__within=travel_time_area)
-    events = Event.objects.prefetch_related("categories").filter(coordinates__within=travel_time_area)
+    events_in_the_area = Event.objects.prefetch_related("categories").filter(coordinates__within=travel_time_area)
 
 
-    logger.error('Found {} locations and {} events'.format(0, len(events)))
+    logger.error('Found {} locations and {} events'.format(0, len(events_in_the_area)))
 
     # the more information we get from the user, the better we are able to score the results
     activity_score = int(request.GET.get('activity_score', 50)) / 100
     social_score = int(request.GET.get('social_score', 50)) / 100
     budget = int(request.GET.get('budget', 100))
 
-    prefered_events = preferences_filter_for_events(events,{ "activity_score": activity_score, "social_score": social_score}, 20)
+    prefered_events = preferences_filter_for_events(events_in_the_area, { "activity_score": activity_score, "social_score": social_score}, 20)
+    best_priced_events = budget_filter_for_events(prefered_events, budget, address, datetime_start, datetime_end, 10)
 
-    logger.error(prefered_events)
+    logger.error(best_priced_events)
 
     # TODO: add place label
     return JsonResponse({
@@ -82,49 +83,28 @@ def surprise_me(request):
             "results": [
                 {
                     "type": "event",
-                    "name": event.event.event_name
-                } for event in prefered_events
+                    "name": weighted_event.event.event_name,
+                    "price": weighted_event.cost
+                } for weighted_event in best_priced_events
             ],
         }, 
         safe=False, 
         json_dumps_params={"ensure_ascii": False}
     )
 
-def filter(events, address, datetime_start, datetime_end, activity_score, social_score, budget, max_results=10, with_train_info=False, threshold=1):
-    logger = logging.getLogger('logger')
-    rated_events = []
+def budget_filter_for_events(events, budget, address, datetime_start, datetime_end, max_results):
+    weighted_events = []
     for event in events:
-        is_supersaver = False
-        price = 0
-        if with_train_info:
-            try:
-                connections_there = get_prize_info_with_depart_time(address, event.venue_name, datetime_start)
-                connections_back = get_prize_info_with_depart_time(address, event.venue_name, datetime_end)
-            except:
-                logger.error('skip')
-                continue
-            # TODO: select connection
-            selected_connection_there = connections_there[0]
-            selected_connection_back = connections_back[0]
+        trip_to_event = get_prize_info_with_depart_time(address, event.event.venue_name, datetime_start)
+        trip_from_event = get_prize_info_with_depart_time(event.event.venue_name, address, datetime_end)
+        if trip_to_event and trip_from_event:
+            cost = trip_to_event.price + trip_from_event.price
+            weighted_events.append(WeightedEvent(event.event, event.preference_score, cost))
 
-            price = selected_connection_there[1] + selected_connection_back[1]
-            is_supersaver = selected_connection_there[2] or selected_connection_back[2]
+    filtered_weighted_events = filter(lambda weighted_event: weighted_event.cost <= budget, weighted_events)
+    sorted_weighted_events = sorted(filtered_weighted_events, key=lambda weighted_event: weighted_event.cost * (1-weighted_event.preference_score))
 
-        category = get_categories_guidle.get_categories(event.id)
-
-        score = get_cost(
-            weights=[
-                activity_score,
-                social_score
-            ],
-            event_category=category,
-            price=price,
-            price_limit=budget,
-            superprice_flag=is_supersaver
-        )
-        rated_events.append((score, event))
-    sorted_events = list(map(lambda element: element[1], sorted(rated_events, key=lambda element: element[0])))
-    return sorted_events[0:max_results]
+    return sorted_weighted_events[0:max_results]
 
 def le_preferences(request):
     kinds = LocationKind.objects.all()
