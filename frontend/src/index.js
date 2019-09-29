@@ -25,7 +25,8 @@ ReactDOM.render(
                 startDT: formatDate(new Date(Date.now())),
                 endDT: formatDate(new Date(Date.now() + 60000 * 60 * 24)),
                 passive: 0,
-                wild: 0
+                wild: 0,
+                budget: 80,
             }
         })}
     >

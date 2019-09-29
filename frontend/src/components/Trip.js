@@ -26,7 +26,7 @@ const FlexCol = styled.div`
     height: 100%;
     display: flex;
     flex-flow: column nowrap;
-    justify-content: space-between;
+    justify-content: flex-start;
 `
 
 const OptionsCol = styled.div`
@@ -42,9 +42,11 @@ const OptionsCol = styled.div`
 
 const MyOptions = props => {
     console.log(props);
-    return (<OptionsCol>
-        {props.ops.map(op => <p key={op.name}>{op.name}</p>)}
-    </OptionsCol>);
+    return (
+        <OptionsCol>
+            {props.ops.map((op, index) => { const n = `${op.name}!${index}`; return <p key={n}>{op.name}</p> })}
+        </OptionsCol>
+    );
 }
 
 class Trip extends React.Component {
@@ -54,38 +56,47 @@ class Trip extends React.Component {
     }
 
     getOptions = async () => {
-        Axios.get(`http://206.189.50.95:8000/api/surprize?lat=47.390499&long=8.515806&departure=${this.props.startDT}`)
-            .then(val => this.setState({ options: val.data.results }));
+        const { location, startDT, endDT, passive, wild, budget } = this.props;
+        Axios.get(`http://206.189.50.95:8000/api/surprize?location=${location}&startDT=${startDT}&endDT=${endDT}&social_score=${wild}&activity_score=${passive}&budget=${budget}`)
+            .then(val => {
+                console.log(val);
+                if (val.data.success) {
+                    this.setState({ options: val.data.results });
+                }
+            }
+            );
     }
 
     componentDidMount = async () => {
         await this.getOptions();
     }
 
-    render() {
+    async handleChange(e, prop) {
+        this.props.setReduxValue({ prop, value: e.target.value });
+        this.getOptions();
+    }
 
+    render() {
+        console.log(this.props);
         return (
             <BG>
-                <MediaQuery query="(max-aspect-ratio: 1/1)">
+                <FlexRow>
                     <FlexCol>
-                        <div>Preferences</div>
-                        <div>Show options</div>
+                        <h1>Preferences</h1>
+                        <div>Passive <input onChange={(e) => this.handleChange(e, "passive")} type="range" name="points" min="1" max="100" /> Active</div>
+                        <div>Concert/Party <input onChange={(e) => this.handleChange(e, "wild")} type="range" name="points" min="1" max="100" /> Museum</div>
+                        <div>Budget <input onChange={(e) => { this.props.setReduxValue({ prop: "budget", value: e.target.value }) }} type="number" value={this.props.budget} /></div>
                     </FlexCol>
-                </MediaQuery>
-                <MediaQuery query="(min-aspect-ratio: 1/1)">
-                    <FlexRow>
-                        <div>Preferences</div>
-                        <MyOptions ops={this.state.options} />
-                    </FlexRow>
-                </MediaQuery>
+                    <MyOptions ops={this.state.options} />
+                </FlexRow>
             </BG>
         )
     }
 }
 
 const mapStateToProps = state => {
-    const { location, startDT, endDT, passive, wild } = state.reduxProps;
-    return { location, startDT, endDT, passive, wild };
+    const { location, startDT, endDT, passive, wild, budget } = state.reduxProps;
+    return { location, startDT, endDT, passive, wild, budget };
 }
 
 export default connect(mapStateToProps, { setReduxValue: setValue })(Trip);
