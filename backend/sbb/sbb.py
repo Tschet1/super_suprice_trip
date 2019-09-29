@@ -30,7 +30,8 @@ def _login():
 
     response = requests.request("POST", url, data=payload, headers=headers)
 
-    return json.loads(response.text)['access_token']
+    if response.status_code == 200:
+        return json.loads(response.text)['access_token']
 
 @cache(timeout=timedelta(minutes=15), key_func=lambda src_id, dst_id, header, arrival=None, departure=None: (src_id, dst_id, arrival, departure,))
 def _get_trips_by_departure_or_arrival(src_id, dst_id, header, arrival=None, departure=None):
@@ -78,17 +79,18 @@ def _get_trip_cost(tripId, headers):
     }
 
     response = requests.request("GET", url, headers=headers, params=params)
-    response = json.loads(response.text)
-    
-    trips = [
-        Trip(
-            trip['tripId'], 
-            trip['price']/100., 
-            trip['productId'] == 4004
-        )  for trip in response if "status" not in response
-    ]
-    if trips:
-        return min(trips, key=lambda trip: trip.price)
+    if response.status_code == 200:
+        response = json.loads(response.text)
+        
+        trips = [
+            Trip(
+                trip['tripId'], 
+                trip['price']/100., 
+                trip['productId'] == 4004
+            )  for trip in response if "status" not in response
+        ]
+        if trips:
+            return min(trips, key=lambda trip: trip.price)
 
 uid_cache = {}
 
@@ -98,9 +100,11 @@ def _get_uid(location, headers):
         return uid_cache[location]
     url = 'https://b2p-int.api.sbb.ch/api/locations?name={}'.format(location)
     response = requests.request("GET", url, headers=headers)
-    uid = json.loads(response.text)[0]['id']
-    uid_cache[location] = uid
-    return uid
+
+    if response.status_code == 200:
+        uid = json.loads(response.text)[0]['id']
+        uid_cache[location] = uid
+        return uid
 
 
 def _get_trips_start(src_id, dst_id, date, headers):
@@ -126,7 +130,8 @@ def _get_trips_start(src_id, dst_id, date, headers):
 
     url = 'https://b2p-int.api.sbb.ch/api/route-offers'
     response = requests.request("GET", url, headers=headers_new, params=params)
-    return [(trip['offers'][0]['offerId'], trip['totalPrice'], trip['offers'][0]['productId'] == 4004) for trip in json.loads(response.text) if len(trip['offers']) > 0 and not trip['offers'][0]['direction'] == 'round']
+    if response.status_code == 200:
+        return [(trip['offers'][0]['offerId'], trip['totalPrice'], trip['offers'][0]['productId'] == 4004) for trip in json.loads(response.text) if len(trip['offers']) > 0 and not trip['offers'][0]['direction'] == 'round']
 
 
 def _get_trips_arrival(src_id, dst_id, date, headers):
@@ -153,8 +158,9 @@ def _get_trips_arrival(src_id, dst_id, date, headers):
 
     url = 'https://b2p-int.api.sbb.ch/api/route-offers'
     response = requests.request("GET", url, headers=headers_new, params=params)
-    #print(json.loads(response.text))
-    return [(trip['offers'][0]['offerId'], trip['totalPrice'], trip['offers'][0]['productId'] == 125) for trip in json.loads(response.text) if len(trip['offers']) > 0 and not trip['offers'][0]['direction'] == 'round']
+    
+    if response.status_code == 200:
+        return [(trip['offers'][0]['offerId'], trip['totalPrice'], trip['offers'][0]['productId'] == 125) for trip in json.loads(response.text) if len(trip['offers']) > 0 and not trip['offers'][0]['direction'] == 'round']
 
 
 def get_prize_info_with_depart_time(start_loc, end_loc, start_time):
