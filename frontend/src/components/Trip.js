@@ -44,6 +44,7 @@ const MyOptions = props => {
     console.log(props);
     return (
         <OptionsCol>
+            <h1>Travel Options</h1>
             {props.ops.map((op, index) => { const n = `${op.name}!${index}`; return <p key={n}>{op.name}</p> })}
         </OptionsCol>
     );
