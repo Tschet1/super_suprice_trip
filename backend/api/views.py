@@ -14,6 +14,9 @@ import get_categories_guidle
 import logging
 from random import shuffle
 from api.preferences_filter import preferences_filter_for_events, WeightedEvent
+import time
+from multiprocessing import dummy
+
 
 def surprise_me(request):
     logger = logging.getLogger('logger')
@@ -45,6 +48,11 @@ def surprise_me(request):
     if datetime_end < datetime_start:
         return JsonResponse({"success": False, "error": "make sure the end is before the start"})
 
+    # the more information we get from the user, the better we are able to score the results
+    activity_score = int(request.GET.get('activity_score', 50)) / 100
+    social_score = int(request.GET.get('social_score', 50)) / 100
+    budget = int(request.GET.get('budget', 100))
+
     # get the total time that we have available in minutes
     total_time_budget_minutes = (datetime_end - datetime_start).seconds // 60
 
@@ -54,26 +62,35 @@ def surprise_me(request):
     logger.error('Coordinates {}, time start {}, travel time {}'.format(coordinates, datetime_start, max_travel_time_min*60))
 
     # get reachable area
+    get_travel_time_start = time.time()
     travel_time_area = get_travel_time(
         departure_time=datetime_start,
         max_travel_time_sec=max_travel_time_min * 60,
         coordinates=coordinates
     )
+    get_travel_time_duration = time.time() - get_travel_time_start
 
     # find locations in reachable area
     #locations = Location.objects.filter(coordinates__within=travel_time_area)
+    load_events_start = time.time()
     events_in_the_area = Event.objects.prefetch_related("categories").filter(coordinates__within=travel_time_area)
+    load_events_duration = time.time() - load_events_start
 
 
     logger.error('Found {} locations and {} events'.format(0, len(events_in_the_area)))
 
-    # the more information we get from the user, the better we are able to score the results
-    activity_score = int(request.GET.get('activity_score', 50)) / 100
-    social_score = int(request.GET.get('social_score', 50)) / 100
-    budget = int(request.GET.get('budget', 100))
-
+    filter_prefered_start = time.time()
     prefered_events = preferences_filter_for_events(events_in_the_area, { "activity_score": activity_score, "social_score": social_score}, 20)
+    filter_prefered_duration = time.time() - filter_prefered_start
+    
+    filter_budget_start = time.time()
     best_priced_events = budget_filter_for_events(prefered_events, budget, address, datetime_start, datetime_end, 10)
+    filter_budget_duration = time.time() - filter_budget_start
+
+    logger.error(f"get_travel_time_duration: {get_travel_time_duration}")
+    logger.error(f"load_events_duration: {load_events_duration}")
+    logger.error(f"filter_prefered_duration: {filter_prefered_duration}")
+    logger.error(f"filter_budget_duration: {filter_budget_duration}")
 
     # TODO: add place label
     return JsonResponse({
@@ -91,13 +108,15 @@ def surprise_me(request):
     )
 
 def budget_filter_for_events(events, budget, address, datetime_start, datetime_end, max_results):
-    weighted_events = []
-    for event in events:
+    pool = dummy.Pool(20)
+    def wheight_event(event):
         trip_to_event = get_prize_info_with_depart_time(address, event.event.venue_name, datetime_start)
         trip_from_event = get_prize_info_with_depart_time(event.event.venue_name, address, datetime_end)
         if trip_to_event and trip_from_event:
             cost = trip_to_event.price + trip_from_event.price
-            weighted_events.append(WeightedEvent(event.event, event.preference_score, cost))
+            return WeightedEvent(event.event, event.preference_score, cost)
+
+    weighted_events=filter(lambda weighted_event: weighted_event is not None, pool.map(wheight_event, events))
 
     filtered_weighted_events = filter(lambda weighted_event: weighted_event.cost <= budget, weighted_events)
     sorted_weighted_events = sorted(filtered_weighted_events, key=lambda weighted_event: weighted_event.cost * (1-weighted_event.preference_score))

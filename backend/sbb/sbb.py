@@ -159,9 +159,12 @@ def get_prize_info_with_depart_time(start_loc, end_loc, start_time):
         'X-Conversation-Id': 'e5eeb775-1e0e-4f89-923d-afa780ef844b',  # TODO: find a way to set this
     }
 
-    # get UIDs
-    start_id = _get_uid(start_loc, headers)
-    dst_id = _get_uid(end_loc, headers)
+    try:
+        # get UIDs
+        start_id = _get_uid(start_loc, headers)
+        dst_id = _get_uid(end_loc, headers)
+    except:
+        return
 
     # get trips
     trips = _get_trips_by_departure_or_arrival(start_id, dst_id, headers, departure=start_time)
