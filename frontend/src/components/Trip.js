@@ -57,9 +57,9 @@ class Trip extends React.Component {
 
     getOptions = async () => {
         const { location, startDT, endDT, passive, wild, budget } = this.props;
-        console.log("Change");
         Axios.get(`http://206.189.50.95:8000/api/surprize?location=${location}&startDT=${startDT}&endDT=${endDT}&social_score=${wild}&activity_score=${passive}&budget=${budget}`)
             .then(val => {
+                console.log(val);
                 if (val.data.success) {
                     this.setState({ options: val.data.results });
                 }
@@ -77,13 +77,14 @@ class Trip extends React.Component {
     }
 
     render() {
+        console.log(this.props);
         return (
             <BG>
                 <FlexRow>
                     <FlexCol>
                         <h1>Preferences</h1>
-                        <div>Passive <input onChange={(e) => this.handleChange(e, "passive")} type="range" name="points" min="0" max="100" /> Active</div>
-                        <div>Concert/Party <input onChange={(e) => this.handleChange(e, "wild")} type="range" name="points" min="0" max="100" /> Museum</div>
+                        <div>Passive <input onChange={(e) => this.handleChange(e, "passive")} type="range" name="points" min="1" max="100" /> Active</div>
+                        <div>Concert/Party <input onChange={(e) => this.handleChange(e, "wild")} type="range" name="points" min="1" max="100" /> Museum</div>
                         <div>Budget <input onChange={(e) => { this.props.setReduxValue({ prop: "budget", value: e.target.value }) }} type="number" value={this.props.budget} /></div>
                     </FlexCol>
                     <MyOptions ops={this.state.options} />
