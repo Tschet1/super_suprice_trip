@@ -84,8 +84,8 @@ class Trip extends React.Component {
                 <FlexRow>
                     <FlexCol>
                         <h1>Preferences</h1>
-                        <div>Passive <input onChange={(e) => this.handleChange(e, "passive")} type="range" name="points" min="1" max="100" /> Active</div>
-                        <div>Concert/Party <input onChange={(e) => this.handleChange(e, "wild")} type="range" name="points" min="1" max="100" /> Museum</div>
+                        <div>Active <input onChange={(e) => this.handleChange(e, "passive")} type="range" name="points" min="1" max="100" /> Passive</div>
+                        <div>Museum <input onChange={(e) => this.handleChange(e, "wild")} type="range" name="points" min="1" max="100" /> Concert/Party</div>
                         <div>Budget <input onChange={(e) => { this.props.setReduxValue({ prop: "budget", value: e.target.value }) }} type="number" value={this.props.budget} /></div>
                     </FlexCol>
                     <MyOptions ops={this.state.options} />
