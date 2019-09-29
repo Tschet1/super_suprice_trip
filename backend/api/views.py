@@ -13,6 +13,7 @@ from time_map.time_travel_map import Coordinates
 import get_categories_guidle
 import logging
 from random import shuffle
+from api.preferences_filter import preferences_filter_for_events
 
 def surprise_me(request):
     logger = logging.getLogger('logger')
@@ -60,37 +61,29 @@ def surprise_me(request):
     )
 
     # find locations in reachable area
-    locations = Location.objects.filter(coordinates__within=travel_time_area)
-    events = Event.objects.filter(coordinates__within=travel_time_area)
+    #locations = Location.objects.filter(coordinates__within=travel_time_area)
+    events = Event.objects.prefetch_related("categories").filter(coordinates__within=travel_time_area)
 
 
-    logger.error('Found {} locations and {} events'.format(len(locations), len(events)))
+    logger.error('Found {} locations and {} events'.format(0, len(events)))
 
     # the more information we get from the user, the better we are able to score the results
     activity_score = int(request.GET.get('activity_score', 50)) / 100
     social_score = int(request.GET.get('social_score', 50)) / 100
     budget = int(request.GET.get('budget', 100))
 
-    # TODO: add traveltime to cost
-    logger.error('start filter')
-    events = filter(list(events), address, datetime_start, datetime_end, activity_score, social_score, budget, max_results=20, with_train_info=False, threshold=1)
-    logger.error('done 1')
-    events = filter(events, address, datetime_start, datetime_end, activity_score, social_score, budget, max_results=10, with_train_info=True, threshold=100)
-    logger.error('done 2')
+    prefered_events = preferences_filter_for_events(events,{ "activity_score": activity_score, "social_score": social_score}, 20)
+
+    logger.error(prefered_events)
 
     # TODO: add place label
     return JsonResponse({
             "success":True, 
             "results": [
                 {
-                    "type": "location",
-                    "name": location.name
-                } for location in locations
-            ]+[
-                {
                     "type": "event",
-                    "name": event.event_name
-                } for event in events
+                    "name": event.event.event_name
+                } for event in prefered_events
             ],
         }, 
         safe=False, 
@@ -99,10 +92,8 @@ def surprise_me(request):
 
 def filter(events, address, datetime_start, datetime_end, activity_score, social_score, budget, max_results=10, with_train_info=False, threshold=1):
     logger = logging.getLogger('logger')
-    events_chosen = []
-    shuffle(events)
+    rated_events = []
     for event in events:
-        logger.error(len(events_chosen))
         is_supersaver = False
         price = 0
         if with_train_info:
@@ -131,13 +122,9 @@ def filter(events, address, datetime_start, datetime_end, activity_score, social
             price_limit=budget,
             superprice_flag=is_supersaver
         )
-
-        logger.error(score)
-        if score < threshold:
-            events_chosen.append(event)
-        if len(events_chosen) >= max_results:
-            break
-    return events_chosen
+        rated_events.append((score, event))
+    sorted_events = list(map(lambda element: element[1], sorted(rated_events, key=lambda element: element[0])))
+    return sorted_events[0:max_results]
 
 def le_preferences(request):
     kinds = LocationKind.objects.all()
