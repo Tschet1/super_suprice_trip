@@ -111,7 +111,7 @@ def budget_filter_for_events(events, budget, address, datetime_start, datetime_e
     pool = dummy.Pool(20)
     def wheight_event(event):
         trip_to_event = get_prize_info_with_depart_time(address, event.event.venue_name, datetime_start)
-        trip_from_event = get_prize_info_with_depart_time(event.event.venue_name, address, datetime_end)
+        trip_from_event = get_prize_info_with_arrival_time(event.event.venue_name, address, datetime_end)
         if trip_to_event and trip_from_event:
             cost = trip_to_event.price + trip_from_event.price
             return WeightedEvent(event.event, event.preference_score, cost)

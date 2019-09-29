@@ -6,7 +6,10 @@ import json
 import datetime
 import logging
 from typing import NamedTuple
+from funcy import cache, log_durations, retry, ignore, log_errors
+from datetime import timedelta
 
+@cache(timeout=timedelta(minutes=15))
 def _login():
     url = "https://sso-int.sbb.ch/auth/realms/SBB_Public/protocol/openid-connect/token"
 
@@ -29,7 +32,7 @@ def _login():
 
     return json.loads(response.text)['access_token']
 
-
+@cache(timeout=timedelta(minutes=15), key_func=lambda src_id, dst_id, header, arrival=None, departure=None: (src_id, dst_id, arrival, departure,))
 def _get_trips_by_departure_or_arrival(src_id, dst_id, header, arrival=None, departure=None):
     url = 'https://b2p-int.api.sbb.ch/api/trips'
 
@@ -54,9 +57,9 @@ def _get_trips_by_departure_or_arrival(src_id, dst_id, header, arrival=None, dep
     }
 
     response = requests.request("GET", url, headers=header, params=params)
-    response = json.loads(response.text)
-
-    return [trip['tripId'] for trip in response]
+    if response.status_code == 200:
+        response = json.loads(response.text)
+        return [trip['tripId'] for trip in response]
 
 
 
@@ -65,12 +68,13 @@ class Trip(NamedTuple):
     price: int
     is_supersaver: bool
 
-def _get_trip_cost(tripIds, headers):
+@cache(timeout=timedelta(minutes=15), key_func=lambda tripId, headers: tripId)
+def _get_trip_cost(tripId, headers):
     url = 'https://b2p-int.api.sbb.ch/api/v2/prices'
 
     params = {
         'passengers': 'paxa;42;half-fare', #TODO: make this dynamic
-        'tripIds': tripIds[0],
+        'tripIds': tripId,
     }
 
     response = requests.request("GET", url, headers=headers, params=params)
@@ -86,12 +90,17 @@ def _get_trip_cost(tripIds, headers):
     if trips:
         return min(trips, key=lambda trip: trip.price)
 
+uid_cache = {}
 
-
+@cache(timeout=timedelta(minutes=15), key_func=lambda location, headers: location)
 def _get_uid(location, headers):
+    if location in uid_cache:
+        return uid_cache[location]
     url = 'https://b2p-int.api.sbb.ch/api/locations?name={}'.format(location)
     response = requests.request("GET", url, headers=headers)
-    return json.loads(response.text)[0]['id']
+    uid = json.loads(response.text)[0]['id']
+    uid_cache[location] = uid
+    return uid
 
 
 def _get_trips_start(src_id, dst_id, date, headers):
@@ -149,32 +158,12 @@ def _get_trips_arrival(src_id, dst_id, date, headers):
 
 
 def get_prize_info_with_depart_time(start_loc, end_loc, start_time):
-    try:
-        token = _login()
-
-        headers = {
-            'X-Contract-Id': os.environ['SBB_CONTRACT_ID'],
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache',
-            'Authorization': 'Bearer {}'.format(token),
-            'X-Conversation-Id': 'e5eeb775-1e0e-4f89-923d-afa780ef844b',  # TODO: find a way to set this
-        }
-
-        # get UIDs
-        start_id = _get_uid(start_loc, headers)
-        dst_id = _get_uid(end_loc, headers)
-
-        # get trips
-        trips = _get_trips_by_departure_or_arrival(start_id, dst_id, headers, departure=start_time)
-
-        # get costs
-        costs = _get_trip_cost(trips, headers)
-
-        return costs
-    except:
-        return
+    return get_prize_info(start_loc, end_loc, departure=start_time)
 
 def get_prize_info_with_arrival_time(start_loc, end_loc, arrival_time):
+    return get_prize_info(start_loc, end_loc, arrival=arrival_time)
+
+def get_prize_info(start_loc, end_loc, **kwargs):
     token = _login()
 
     headers = {
@@ -190,12 +179,14 @@ def get_prize_info_with_arrival_time(start_loc, end_loc, arrival_time):
     dst_id = _get_uid(end_loc, headers)
 
     # get trips
-    trips = _get_trips_by_departure_or_arrival(start_id, dst_id, headers, arrival=arrival_time)
+    trip_ids = _get_trips_by_departure_or_arrival(start_id, dst_id, headers, **kwargs)
 
-    # get costs
-    costs = _get_trip_cost(trips, headers)
-
-    return costs
+    if trip_ids:
+        # get costs
+        costs = [_get_trip_cost(trip_id, headers) for trip_id in trip_ids]
+        costs = [cost for cost in costs if cost is not None]
+        if costs:
+            return min(costs)
 
 
 
