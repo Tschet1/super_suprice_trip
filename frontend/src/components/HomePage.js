@@ -1,6 +1,8 @@
 import React from 'react'
 import { withRouter } from 'react-router-dom'
+import { connect } from 'react-redux'
 import styled from 'styled-components'
+import setValue from '../util/redux/actions/Action'
 import LocationInput from '../util/LocationSearchInput';
 
 const Home = styled.div`
@@ -52,18 +54,8 @@ const ItemInSelector = styled.input`
     background-color: white;
 `;
 
-const formatDate = (D) => {
-    const S = `${D.getFullYear()}-` +
-        `${D.getMonth() >= 10 ? D.getMonth() : `0${D.getMonth()}`}-` +
-        `${D.getDate() >= 10 ? D.getDate() : `0${D.getDate()}`}T` +
-        `${D.getHours() >= 10 ? D.getHours() : `0${D.getHours()}`}:` +
-        `${D.getMinutes() >= 10 ? D.getMinutes() : `0${D.getMinutes()}`}`
-    // console.log(S);
-    return S;
-}
-
 const HomePage = props => {
-    // const { history } = props;
+    const { history, startDT, endDT, setReduxValue } = props;
     return (
         <Home>
             <SectionDiv>
@@ -71,9 +63,9 @@ const HomePage = props => {
                     <HeadingText>Super Surprise Trip</HeadingText>
                     <SelectorDiv>
                         <LocationInput />
-                        <ItemInSelector type="datetime-local" defaultValue={formatDate(new Date())} onChange={(e) => console.log(e.target.value)}></ItemInSelector>
-                        <ItemInSelector type="datetime-local" defaultValue={formatDate(new Date(Date.now() + 60000 * 60 * 24))} onChange={(e) => console.log(e.target.value)}></ItemInSelector>
-                        <ItemInSelector type="submit" value="Find my trip"></ItemInSelector>
+                        <ItemInSelector type="datetime-local" value={startDT} onChange={(e) => setReduxValue({ prop: 'startDT', value: e.target.value })}></ItemInSelector>
+                        <ItemInSelector type="datetime-local" value={endDT} onChange={(e) => setReduxValue({ prop: 'endDT', value: e.target.value })}></ItemInSelector>
+                        <ItemInSelector type="submit" onClick={() => history.push('/trip')} value="Find my trip"></ItemInSelector>
                     </SelectorDiv>
                 </MainDiv>
             </SectionDiv>
@@ -81,4 +73,9 @@ const HomePage = props => {
     )
 }
 
-export default withRouter(HomePage)
+const mapStateToProps = (state) => {
+    const { startDT, endDT } = state.reduxProps;
+    return { startDT, endDT };
+}
+
+export default connect(mapStateToProps, { setReduxValue: setValue })(withRouter(HomePage));
