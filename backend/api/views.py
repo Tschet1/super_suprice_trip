@@ -67,8 +67,8 @@ def surprise_me(request):
     logger.error('Found {} locations and {} events'.format(len(locations), len(events)))
 
     # the more information we get from the user, the better we are able to score the results
-    activity_score = float(request.GET.get('activity_score', 0.5))
-    social_score = float(request.GET.get('social_score', 0.5))
+    activity_score = int(request.GET.get('activity_score', 50)) / 100
+    social_score = int(request.GET.get('social_score', 50)) / 100
     budget = int(request.GET.get('budget', 100))
 
     # TODO: add traveltime to cost
