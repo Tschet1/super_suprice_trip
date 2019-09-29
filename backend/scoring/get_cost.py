@@ -63,6 +63,8 @@ def get_cost(weights, event_category, price=1, price_limit=1, superprice_flag=Fa
 
     elif event_category == 'welness':
         cost = math.fabs(0 - weights[0]) + math.fabs(0.5 - weights[1])
+    else:
+        cost = 10000
 
     if price > price_limit:
         cost = 10000

@@ -4,6 +4,7 @@ import os
 import time
 import json
 import datetime
+import logging
 
 def _login():
     url = "https://sso-int.sbb.ch/auth/realms/SBB_Public/protocol/openid-connect/token"
@@ -61,12 +62,12 @@ def _get_trip_cost(tripIds, headers):
 
     params = {
         'passengers': 'paxa;42;half-fare', #TODO: make this dynamic
-        'tripIds': tripIds,
+        'tripIds': tripIds[0],
     }
 
     response = requests.request("GET", url, headers=headers, params=params)
     response = json.loads(response.text)
-    return [(trip['tripId'], trip['price'], trip['productId'] == 4004) for trip in response]
+    return [(trip['tripId'], trip['price']/100., trip['productId'] == 4004) for trip in response]
     #return [trip['tripId'] for trip in response]
 
 

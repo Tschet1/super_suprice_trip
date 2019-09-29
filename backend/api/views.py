@@ -12,6 +12,7 @@ from google_maps.get_place_from_placeId import get_place_from_placeId
 from time_map.time_travel_map import Coordinates
 import get_categories_guidle
 import logging
+from random import shuffle
 
 def surprise_me(request):
     logger = logging.getLogger('logger')
@@ -47,7 +48,7 @@ def surprise_me(request):
     total_time_budget_minutes = (datetime_end - datetime_start).seconds // 60
 
     # we define a maximum of 25% of the time available for travelling per way
-    max_travel_time_min = total_time_budget_minutes // 4
+    max_travel_time_min = max(15, total_time_budget_minutes // 4)
 
     logger.error('Coordinates {}, time start {}, travel time {}'.format(coordinates, datetime_start, max_travel_time_min*60))
 
@@ -63,39 +64,19 @@ def surprise_me(request):
     events = Event.objects.filter(coordinates__within=travel_time_area)
 
 
-    logger.error('Found {} locations and {} events'.format(locations, events))
+    logger.error('Found {} locations and {} events'.format(len(locations), len(events)))
 
     # the more information we get from the user, the better we are able to score the results
     activity_score = request.GET.get('activity_score', 0.5)
     social_score = request.GET.get('social_score', 0.5)
-    budget = request.GET.get('budget', None)
+    budget = request.GET.get('budget', 100)
 
     # TODO: add traveltime to cost
-
-    for event in events:
-        connections_there = get_prize_info_with_depart_time(address, event.venue_name, datetime_start)
-        connections_back = get_prize_info_with_depart_time(address, event.venue_name, datetime_start)
-        # TODO: select connection
-        selected_connection_there = connections_there[0]
-        selected_connection_back = connections_back[0]
-
-        price = selected_connection_there[1] + selected_connection_back[1]
-        is_supersaver = selected_connection_there[2] or selected_connection_back[2]
-
-        category = get_categories_guidle.get_categories(events.id)
-
-        score = get_cost(
-            weights=[
-                activity_score,
-                social_score
-            ],
-            event_category=category,
-            price=price,
-            price_limit=budget,
-            superprice_flag=is_supersaver
-        )
-
-        print(score)
+    logger.error('start filter')
+    events = filter(list(events), address, datetime_start, datetime_end, activity_score, social_score, budget, max_results=20, with_train_info=False, threshold=1)
+    logger.error('done 1')
+    events = filter(events, address, datetime_start, datetime_end, activity_score, social_score, budget, max_results=10, with_train_info=True, threshold=100)
+    logger.error('done 2')
 
     # TODO: add place label
     return JsonResponse({
@@ -115,6 +96,48 @@ def surprise_me(request):
         safe=False, 
         json_dumps_params={"ensure_ascii": False}
     )
+
+def filter(events, address, datetime_start, datetime_end, activity_score, social_score, budget, max_results=10, with_train_info=False, threshold=1):
+    logger = logging.getLogger('logger')
+    events_chosen = []
+    shuffle(events)
+    for event in events:
+        logger.error(len(events_chosen))
+        is_supersaver = False
+        price = 0
+        if with_train_info:
+            try:
+                connections_there = get_prize_info_with_depart_time(address, event.venue_name, datetime_start)
+                connections_back = get_prize_info_with_depart_time(address, event.venue_name, datetime_end)
+            except:
+                logger.error('skip')
+                continue
+            # TODO: select connection
+            selected_connection_there = connections_there[0]
+            selected_connection_back = connections_back[0]
+
+            price = selected_connection_there[1] + selected_connection_back[1]
+            is_supersaver = selected_connection_there[2] or selected_connection_back[2]
+
+        category = get_categories_guidle.get_categories(event.id)
+
+        score = get_cost(
+            weights=[
+                activity_score,
+                social_score
+            ],
+            event_category=category,
+            price=price,
+            price_limit=budget,
+            superprice_flag=is_supersaver
+        )
+
+        logger.error(score)
+        if score < threshold:
+            events_chosen.append(event)
+        if len(events_chosen) >= max_results:
+            break
+    return events_chosen
 
 def le_preferences(request):
     kinds = LocationKind.objects.all()

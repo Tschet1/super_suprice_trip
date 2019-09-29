@@ -1,9 +1,17 @@
-def get_categories(event_id):
+from functools import lru_cache
+
+@lru_cache()
+def prepare():
     import json
     with open("data/guidle/category.json", "r") as file:
         data = json.load(file)
     with open("data/guidle/event_category.json", "r") as file:
-        data2= json.load(file)
+        data2 = json.load(file)
+
+    return data, data2
+
+def get_categories(event_id):
+    data, data2 = prepare()
 
     for idx2 in data2:
         if idx2["event_id"] == event_id:
