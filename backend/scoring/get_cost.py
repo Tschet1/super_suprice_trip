@@ -1,4 +1,4 @@
-def get_cost(weights, event_category, price=1, price_limit=1, superprice_flag=False):
+def get_cost(weights, event_category, price=1, price_limit=1, superprice_flag=False, travel_duration=0):
     import math
     """activity score: weights(1) (1:active, 0:passive), 
     culture score: weights(2) (1:culture and museum, 0:concert and party),
@@ -72,6 +72,9 @@ def get_cost(weights, event_category, price=1, price_limit=1, superprice_flag=Fa
         cost = cost + 0.25 * price / price_limit
     else:
         cost = cost + 0.5 * price / price_limit
+
+    if travel_duration != 0:
+        cost = cost + travel_duration//100
 
     return cost
 

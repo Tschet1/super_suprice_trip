@@ -73,7 +73,9 @@ def surprise_me(request):
 
     # TODO: add traveltime to cost
     logger.error('start filter')
-    events = filter(list(events), address, datetime_start, datetime_end, activity_score, social_score, budget, max_results=20, with_train_info=False, threshold=1)
+    shuffle(list(events))
+    events = filter(events, address, datetime_start, datetime_end, activity_score, social_score, budget, max_results=300, with_train_info=False, threshold=100)
+
     logger.error('done 1')
     events = filter(events, address, datetime_start, datetime_end, activity_score, social_score, budget, max_results=10, with_train_info=True, threshold=100)
     logger.error('done 2')
@@ -100,16 +102,20 @@ def surprise_me(request):
 def filter(events, address, datetime_start, datetime_end, activity_score, social_score, budget, max_results=10, with_train_info=False, threshold=1):
     logger = logging.getLogger('logger')
     events_chosen = []
-    shuffle(events)
     for event in events:
         logger.error(len(events_chosen))
         is_supersaver = False
         price = 0
+        travel_duration=0
         if with_train_info:
             try:
+                logger.error('load')
                 connections_there = get_prize_info_with_depart_time(address, event.venue_name, datetime_start)
-                connections_back = get_prize_info_with_depart_time(address, event.venue_name, datetime_end)
-            except:
+                logger.error('load 1')
+                connections_back = get_prize_info_with_arrival_time(address, event.venue_name, datetime_end)
+                logger.error('load 2')
+            except Exception as e:
+                logger.error(e)
                 logger.error('skip')
                 continue
             # TODO: select connection
@@ -118,6 +124,7 @@ def filter(events, address, datetime_start, datetime_end, activity_score, social
 
             price = selected_connection_there[1] + selected_connection_back[1]
             is_supersaver = selected_connection_there[2] or selected_connection_back[2]
+            travel_duration = selected_connection_there[3] + selected_connection_back[3]
 
         category = get_categories_guidle.get_categories(event.id)
 
@@ -129,15 +136,16 @@ def filter(events, address, datetime_start, datetime_end, activity_score, social
             event_category=category,
             price=price,
             price_limit=budget,
-            superprice_flag=is_supersaver
+            superprice_flag=is_supersaver,
+            travel_duration=travel_duration
         )
 
         logger.error(score)
         if score < threshold:
-            events_chosen.append(event)
+            events_chosen.append((score, event))
         if len(events_chosen) >= max_results:
             break
-    return events_chosen
+    return [e[1] for e in sorted(events_chosen, key=lambda x:x[0])]
 
 def le_preferences(request):
     kinds = LocationKind.objects.all()

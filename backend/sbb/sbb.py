@@ -1,11 +1,13 @@
 import requests
-#import dotenv
+# import dotenv
 import os
 import time
 import json
 import datetime
 import logging
+from functools import lru_cache
 
+@lru_cache()
 def _login():
     url = "https://sso-int.sbb.ch/auth/realms/SBB_Public/protocol/openid-connect/token"
 
@@ -27,6 +29,11 @@ def _login():
     response = requests.request("POST", url, data=payload, headers=headers)
 
     return json.loads(response.text)['access_token']
+
+
+def _get_duration(trip):
+    return (datetime.datetime.fromisoformat(trip['segments'][-1]['destination']['arrivalDateTime']) \
+            - datetime.datetime.fromisoformat(trip['segments'][0]['origin']['departureDateTime'])).seconds // 60
 
 
 def _get_trips_by_departure_or_arrival(src_id, dst_id, header, arrival=None, departure=None):
@@ -55,21 +62,25 @@ def _get_trips_by_departure_or_arrival(src_id, dst_id, header, arrival=None, dep
     response = requests.request("GET", url, headers=header, params=params)
     response = json.loads(response.text)
 
-    return [trip['tripId'] for trip in response]
+    return {trip['tripId']: _get_duration(trip) for trip in response}
+
 
 def _get_trip_cost(tripIds, headers):
     url = 'https://b2p-int.api.sbb.ch/api/v2/prices'
 
+    responses = []
+
     params = {
-        'passengers': 'paxa;42;half-fare', #TODO: make this dynamic
-        'tripIds': tripIds[0],
+        'passengers': 'paxa;42;half-fare',  # TODO: make this dynamic
+        'tripIds': list(tripIds.keys()),
     }
-
     response = requests.request("GET", url, headers=headers, params=params)
-    response = json.loads(response.text)
-    return [(trip['tripId'], trip['price']/100., trip['productId'] == 4004) for trip in response]
-    #return [trip['tripId'] for trip in response]
 
+    responses.extend(
+        [(trip['tripId'], trip['price'] / 100., trip['productId'] == 4004, tripIds[trip['tripId']]) for trip in response])
+
+    return responses
+    # return [trip['tripId'] for trip in response]
 
 
 def _get_uid(location, headers):
@@ -96,12 +107,14 @@ def _get_trips_start(src_id, dst_id, date, headers):
         'destinationId': dst_id,
         'date': date.strftime("%Y-%m-%d"),
         'time': date.strftime("%H:%M"),
-        'passengers': ' paxa;42;half-fare' #TODO: check if user has halbtax
+        'passengers': ' paxa;42;half-fare'  # TODO: check if user has halbtax
     }
 
     url = 'https://b2p-int.api.sbb.ch/api/route-offers'
     response = requests.request("GET", url, headers=headers_new, params=params)
-    return [(trip['offers'][0]['offerId'], trip['totalPrice'], trip['offers'][0]['productId'] == 4004) for trip in json.loads(response.text) if len(trip['offers']) > 0 and not trip['offers'][0]['direction'] == 'round']
+    logging.getLogger('test').error(response)
+    return [(trip['offers'][0]['offerId'], trip['totalPrice'], trip['offers'][0]['productId'] == 4004) for trip in
+            json.loads(response.text) if len(trip['offers']) > 0 and not trip['offers'][0]['direction'] == 'round']
 
 
 def _get_trips_arrival(src_id, dst_id, date, headers):
@@ -117,7 +130,6 @@ def _get_trips_arrival(src_id, dst_id, date, headers):
         'Accept-Language': 'en',
     }
 
-
     params = {
         'originId': src_id,
         'destinationId': dst_id,
@@ -128,8 +140,9 @@ def _get_trips_arrival(src_id, dst_id, date, headers):
 
     url = 'https://b2p-int.api.sbb.ch/api/route-offers'
     response = requests.request("GET", url, headers=headers_new, params=params)
-    #print(json.loads(response.text))
-    return [(trip['offers'][0]['offerId'], trip['totalPrice'], trip['offers'][0]['productId'] == 125) for trip in json.loads(response.text) if len(trip['offers']) > 0 and not trip['offers'][0]['direction'] == 'round']
+    # print(json.loads(response.text))
+    return [(trip['offers'][0]['offerId'], trip['totalPrice'], trip['offers'][0]['productId'] == 125) for trip in
+            json.loads(response.text) if len(trip['offers']) > 0 and not trip['offers'][0]['direction'] == 'round']
 
 
 def get_prize_info_with_depart_time(start_loc, end_loc, start_time):
@@ -155,6 +168,7 @@ def get_prize_info_with_depart_time(start_loc, end_loc, start_time):
 
     return costs
 
+
 def get_prize_info_with_arrival_time(start_loc, end_loc, arrival_time):
     token = _login()
 
@@ -179,8 +193,10 @@ def get_prize_info_with_arrival_time(start_loc, end_loc, arrival_time):
     return costs
 
 
-
 if __name__ == "__main__":
-    #print(get_prize_info_with_depart_time('47.166168,8.515495', 'Zürich HB', datetime.datetime.now() + datetime.timedelta(hours=2)))
-    print(get_prize_info_with_arrival_time('Zug', 'Zürich HB', datetime.datetime.now() + datetime.timedelta(hours=5)))
+    import dotenv
 
+    dotenv.load_dotenv()
+
+    # print(get_prize_info_with_depart_time('47.166168,8.515495', 'Zürich HB', datetime.datetime.now() + datetime.timedelta(hours=2)))
+    print(get_prize_info_with_arrival_time('Zug', 'Zürich HB', datetime.datetime.now() + datetime.timedelta(hours=5)))
