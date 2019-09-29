@@ -6,6 +6,7 @@ import json
 import datetime
 import logging
 from functools import lru_cache
+from typing import NamedTuple
 
 @lru_cache()
 def _login():
@@ -65,6 +66,13 @@ def _get_trips_by_departure_or_arrival(src_id, dst_id, header, arrival=None, dep
     return {trip['tripId']: _get_duration(trip) for trip in response}
 
 
+
+
+class Trip(NamedTuple):
+    id: str
+    price: int
+    is_supersaver: bool
+
 def _get_trip_cost(tripIds, headers):
     url = 'https://b2p-int.api.sbb.ch/api/v2/prices'
 
@@ -75,6 +83,17 @@ def _get_trip_cost(tripIds, headers):
         'tripIds': list(tripIds.keys()),
     }
     response = requests.request("GET", url, headers=headers, params=params)
+    response = json.loads(response.text)
+    
+    trips = [
+        Trip(
+            trip['tripId'], 
+            trip['price']/100., 
+            trip['productId'] == 4004
+        )  for trip in response if "status" not in response
+    ]
+    if trips:
+        return min(trips, key=lambda trip: trip.price)
 
     responses.extend(
         [(trip['tripId'], trip['price'] / 100., trip['productId'] == 4004, tripIds[trip['tripId']]) for trip in response])
