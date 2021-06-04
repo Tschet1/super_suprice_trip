@@ -2,7 +2,7 @@ networkx==2.3
 requests==2.22.0
 pygtfs==0.1.5
 psycopg2==2.8.3
-Django==2.2.5
+Django==2.2.21
 django-mptt==0.10.0
 django-cors-headers==3.1.0
 funcy==1.13
